@@ -1,0 +1,21 @@
+{
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": [
+          "\\[%{TIMESTAMP_ISO8601:@timestamp}\\]\\[%{DATA:hostname}\\]\\[%{WORD:level}(%{SPACE})?\\]\\[%{DATA:class}(%{SPACE})?\\](%{SPACE})?(?<msg>(.|\\r|\\n)*)"
+        ],
+        "ignore_failure": true
+      }
+    },
+    {
+      "remove": {
+        "field": [
+          "message"
+        ],
+        "ignore_failure": true
+      }
+    }
+  ]
+}
