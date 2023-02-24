@@ -1,5 +1,6 @@
 
 # intellij files
+target
 .idea/
 *.iml
 *.ipr
