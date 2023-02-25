@@ -37,16 +37,11 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Sends log events over HTTP.
+ * Sends log events over Elasticsearch HTTP.
  */
 @Plugin(name = "Elasticsearch", category = Node.CATEGORY, elementType = Appender.ELEMENT_TYPE, printObject = true)
 public final class EsAppender extends AbstractAppender {
 
-    /**
-     * Builds HttpAppender instances.
-     *
-     * @param <B> The type to build
-     */
     public static class Builder<B extends Builder<B>> extends AbstractAppender.Builder<B>
             implements org.apache.logging.log4j.core.util.Builder<EsAppender> {
 
@@ -62,10 +57,13 @@ public final class EsAppender extends AbstractAppender {
         private String password;
 
         @PluginBuilderAttribute
-        private int connectTimeoutSeconds = 0;
+        private int connectTimeoutSeconds = 30;
 
         @PluginBuilderAttribute
         private int refreshSeconds = 5;
+
+        @PluginBuilderAttribute
+        private String pipeline = "log4j";
 
         @PluginBuilderAttribute
         private String rolloverPolicy = "day";
@@ -79,7 +77,7 @@ public final class EsAppender extends AbstractAppender {
         @Override
         public EsAppender build() {
             final EsManager esManager = new EsConnectionManager(getConfiguration(), getConfiguration().getLoggerContext(),
-                    getName(), host, username, password, connectTimeoutSeconds, refreshSeconds, rolloverPolicy, debug, verifyConnection);
+                    getName(), host, username, password, connectTimeoutSeconds, refreshSeconds, pipeline, rolloverPolicy, debug, verifyConnection);
             String pattern = "[%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}][" + hostname() + "][%-5p][%-25c{1.}] %marker %m%n";
 
             Layout layout = getLayout();
@@ -146,9 +144,6 @@ public final class EsAppender extends AbstractAppender {
         }
     }
 
-    /**
-     * @return a builder for a HttpAppender.
-     */
     @PluginBuilderFactory
     public static <B extends Builder<B>> B newBuilder() {
         return new Builder<B>().asBuilder();

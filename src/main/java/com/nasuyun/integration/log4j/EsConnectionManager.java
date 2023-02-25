@@ -47,10 +47,10 @@ public class EsConnectionManager extends EsManager {
     private final int connectTimeoutSeconds;
     private final String rolloverPolicy;
     private final Bulking bulking;
+    private final String pipeline;
     private final boolean debug;
     private final HttpClient client;
     private final int esVersion;
-    private FileResource resource;
     private final boolean ready;
     private final boolean verifyConnection;
 
@@ -62,17 +62,18 @@ public class EsConnectionManager extends EsManager {
                                final String password,
                                final int connectTimeoutSeconds,
                                final int refreshSeconds,
+                               final String pipeline,
                                final String rolloverPolicy,
                                final boolean debug,
                                final boolean verifyConnection) {
         super(configuration, loggerContext, name);
-        this.resource = new FileResource();
         this.host = host;
         this.username = username;
         this.password = password;
         this.connectTimeoutSeconds = connectTimeoutSeconds;
         this.rolloverPolicy = rolloverPolicy;
         this.bulking = new Bulking(refreshSeconds);
+        this.pipeline = pipeline;
         this.debug = debug;
         this.client = HttpClient.newHttpClient();
         this.verifyConnection = verifyConnection;
@@ -127,7 +128,7 @@ public class EsConnectionManager extends EsManager {
             if (Strings.isNotEmpty(body) && body.contains("log4j")) {
                 return true;
             }
-            String templateFileSource = resource.getSource(esVersion == 6 ? "log4j-template-6.json" : "log4j-template-7.json");
+            String templateFileSource = esVersion == 6 ? ConfigFile.log4jTemplate6 : ConfigFile.log4jTemplate7;
             return httpPut("/_template/log4j", templateFileSource);
         } else {
             return false;
@@ -140,7 +141,7 @@ public class EsConnectionManager extends EsManager {
             if (Strings.isNotEmpty(body) && body.contains("log4j")) {
                 return true;
             }
-            String pipeline = resource.getSource("log4j-pipeline.json");
+            String pipeline = ConfigFile.pipeline;
             return httpPut("/_ingest/pipeline/log4j", pipeline);
         } else {
             return false;
@@ -153,27 +154,24 @@ public class EsConnectionManager extends EsManager {
 
         Bulking(int refresh) {
             this.threadPool = Executors.newSingleThreadScheduledExecutor();
-            this.events = new ArrayBlockingQueue<>(1000);
-            threadPool.scheduleAtFixedRate(() -> refresh(), refresh, refresh, TimeUnit.SECONDS);
+            this.events = new ArrayBlockingQueue<>(2000);
+            this.threadPool.scheduleAtFixedRate(() -> refresh(), refresh, refresh, TimeUnit.SECONDS);
         }
 
         void add(final Layout<?> layout, final LogEvent event) {
             final byte[] msg = layout.toByteArray(event);
             Map body = Map.of("message", new String(msg));
-            String json = "";
             ObjectMapper mapper = new ObjectMapper();
             try {
-                json = mapper.writeValueAsString(body);
+                String json = mapper.writeValueAsString(body);
+                events.add(json);
+                if (events.size() >= 1000) {
+                    threadPool.execute(() -> refresh());
+                }
             } catch (JsonProcessingException e) {
                 if (debug) {
                     e.printStackTrace();
                 }
-                return;
-            }
-
-            events.add(json);
-            if (events.size() >= 1000) {
-                threadPool.execute(() -> refresh());
             }
         }
 
@@ -186,7 +184,7 @@ public class EsConnectionManager extends EsManager {
             for (String messageJson : events) {
                 buffer.append(buildIndexRequest(indexName, messageJson));
             }
-            httpPost("/_bulk?pipeline=log4j", buffer.toString());
+            httpPost("/_bulk?pipeline=" + pipeline, buffer.toString());
             events.clear();
         }
 
