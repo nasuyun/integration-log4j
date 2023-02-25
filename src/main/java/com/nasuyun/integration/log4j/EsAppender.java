@@ -1,4 +1,5 @@
 package com.nasuyun.integration.log4j;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
@@ -15,7 +16,6 @@ package com.nasuyun.integration.log4j;
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-
 
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Sends log events over Elasticsearch HTTP.
+ * Sends log events over Elasticsearch .
  */
 @Plugin(name = "Elasticsearch", category = Node.CATEGORY, elementType = Appender.ELEMENT_TYPE, printObject = true)
 public final class EsAppender extends AbstractAppender {

@@ -1,6 +1,6 @@
 package com.nasuyun.integration.log4j;
 
-public class ConfigFile {
+public class Resources {
     static String pipeline = "{\n" +
             "  \"processors\": [\n" +
             "    {\n" +

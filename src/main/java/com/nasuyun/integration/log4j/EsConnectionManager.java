@@ -128,7 +128,7 @@ public class EsConnectionManager extends EsManager {
             if (Strings.isNotEmpty(body) && body.contains("log4j")) {
                 return true;
             }
-            String templateFileSource = esVersion == 6 ? ConfigFile.log4jTemplate6 : ConfigFile.log4jTemplate7;
+            String templateFileSource = esVersion == 6 ? Resources.log4jTemplate6 : Resources.log4jTemplate7;
             return httpPut("/_template/log4j", templateFileSource);
         } else {
             return false;
@@ -141,7 +141,7 @@ public class EsConnectionManager extends EsManager {
             if (Strings.isNotEmpty(body) && body.contains("log4j")) {
                 return true;
             }
-            String pipeline = ConfigFile.pipeline;
+            String pipeline = Resources.pipeline;
             return httpPut("/_ingest/pipeline/log4j", pipeline);
         } else {
             return false;
@@ -184,7 +184,7 @@ public class EsConnectionManager extends EsManager {
             for (String messageJson : events) {
                 buffer.append(buildIndexRequest(indexName, messageJson));
             }
-            httpPost("/_bulk?pipeline=" + pipeline, buffer.toString());
+            httpPost("/_bulk" + (Strings.isEmpty(pipeline) ? "" : "?pipeline=" + pipeline), buffer.toString());
             events.clear();
         }
 

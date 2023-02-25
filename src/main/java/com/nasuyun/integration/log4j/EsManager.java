@@ -1,4 +1,6 @@
-package com.nasuyun.integration.log4j;/*
+package com.nasuyun.integration.log4j;
+
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
